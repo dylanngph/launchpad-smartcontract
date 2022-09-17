@@ -1,0 +1,28 @@
+[
+  {
+    "inputs": [],
+    "name": "saleType",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "_saleType",
+        "type": "uint8"
+      }
+    ],
+    "name": "setSaleType",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

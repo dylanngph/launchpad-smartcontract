@@ -25,11 +25,11 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.4",
+    version: "0.8.9",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 999999,
+        runs: 200,
       },
     },
   },
@@ -37,7 +37,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       initialBaseFeePerGas: 0,
       forking: {
-        url: "https://bsc-dataseed1.binance.org/",
+        url: "https://rpc.ankr.com/bsc",
         // blockNumber: 18929615,
       },
     },
@@ -56,7 +56,6 @@ const config: HardhatUserConfig = {
   abiExporter: {
     runOnCompile: true,
     flat: true,
-    only: ["Greeter"],
   },
   typechain: {
     outDir: "types",
