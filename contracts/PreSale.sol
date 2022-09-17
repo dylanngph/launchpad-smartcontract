@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "../interfaces/IRouter.sol";
+import "./interfaces/IRouter.sol";
+import "./interfaces/IPreSale.sol";
 
 contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     enum SaleStatus {
@@ -18,28 +19,6 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 amount;
         uint256 tokenAmountClaimed;
         bool isRefunded;
-    }
-
-    struct SaleDetail {
-        address owner;
-        address feeTo;
-        IRouter router;
-        IERC20 token;
-        bool isQuoteETH;
-        uint256 price;
-        uint256 listingPrice;
-        uint256 minPurchase;
-        uint256 maxPurchase;
-        uint256 startTime;
-        uint256 endTime;
-        uint256 lpPercent;
-        uint256 softCap;
-        uint256 hardCap;
-        uint256[] vestingTimes;
-        uint256[] vestingPercents;
-        bool isAutoListing;
-        uint256 baseFee;
-        uint256 tokenFee;
     }
 
     uint256 public RATE_PRECISION_FACTOR = 10000;
@@ -81,7 +60,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function initialize(SaleDetail memory _saleDetail) external initializer {
         // init upgradeable
-        transferOwnership(_saleDetail.owner); // owner
+        _transferOwnership(_saleDetail.owner); // owner
         __ReentrancyGuard_init();
 
         // initialize

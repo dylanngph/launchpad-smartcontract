@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "../interfaces/ISaleFactoryManager.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract SaleFactoryBase is Ownable, ReentrancyGuard {
-    address public saleFactoryManager;
     uint8 public saleType;
     address public implementation;
     address public feeTo;
@@ -15,11 +14,11 @@ contract SaleFactoryBase is Ownable, ReentrancyGuard {
     event SaleCreated(address indexed owner, address indexed sale, uint8 saleType);
 
     constructor(
-        address _factoryManager,
+        uint8 _saleType,
         address _implementation,
         uint256 _fee
     ) {
-        saleFactoryManager = _factoryManager;
+        saleType = _saleType;
         implementation = _implementation;
         feeTo = msg.sender;
         fee = _fee;
@@ -30,12 +29,15 @@ contract SaleFactoryBase is Ownable, ReentrancyGuard {
         _;
     }
 
-    modifier onlyManager() {
-        require(msg.sender == saleFactoryManager, "ONLY_MANAGER");
-        _;
+    function clone(bytes32 salt) internal returns (address sale) {
+        sale = Clones.cloneDeterministic(implementation, salt);
     }
 
-    function setSaleType(uint8 _saleType) external onlyManager {
+    function predictAddress(bytes32 salt) public view returns (address sale) {
+        sale = Clones.predictDeterministicAddress(implementation, salt, address(this));
+    }
+
+    function setSaleType(uint8 _saleType) external onlyOwner {
         saleType = _saleType;
     }
 
@@ -56,9 +58,5 @@ contract SaleFactoryBase is Ownable, ReentrancyGuard {
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
         }
-    }
-
-    function assignSaleToOwner(address _owner, address _sale) internal {
-        ISaleFactoryManager(saleFactoryManager).assignSaleToOwner(_owner, _sale);
     }
 }

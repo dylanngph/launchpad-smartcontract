@@ -34,17 +34,26 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    hardhat: {
-      initialBaseFeePerGas: 0,
-      forking: {
-        url: "https://rpc.ankr.com/bsc",
-        // blockNumber: 18929615,
-      },
-    },
     bsc: {
       url: process.env.BSC_RPC,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
     },
+    // hardhat: {
+    //   accounts: {
+    //     mnemonic: "test test test test test test test test test test test junk",
+    //     // count: 1000,
+    //   },
+    //   initialBaseFeePerGas: 0,
+    //   forking: {
+    //     url: "https://rpc.ankr.com/bsc",
+    //     // blockNumber: 21329229,
+    //   },
+    //   mining: {
+    //     auto: true,
+    //     interval: 3000,
+    //   },
+    //   chainId: 56,
+    // },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -59,6 +68,13 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: "types",
+    externalArtifacts: [
+      "./abi/Router.json",
+      "./abi/PancakeFactory.json",
+      "./abi/PancakePair.json",
+      "./abi/WrappedBNB.json",
+    ],
+    alwaysGenerateOverloads: true,
   },
 };
 

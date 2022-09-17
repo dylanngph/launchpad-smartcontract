@@ -441,7 +441,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct PreSale.SaleDetail",
+        "internalType": "struct SaleDetail",
         "name": "_saleDetail",
         "type": "tuple"
       }
