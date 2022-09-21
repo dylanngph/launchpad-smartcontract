@@ -11,7 +11,7 @@ contract SaleFactoryBase is Ownable, ReentrancyGuard {
     address public feeTo;
     uint256 public fee;
 
-    event SaleCreated(address indexed owner, address indexed sale, uint8 saleType);
+    event SaleCreated(address indexed owner, address indexed sale, uint8 saleType, bytes32 salt);
 
     constructor(
         uint8 _saleType,

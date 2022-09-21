@@ -23,7 +23,7 @@ contract PreSaleFactory is SaleFactoryBase {
         sale = clone(salt);
         IPreSale(sale).initialize(_saleDetail);
 
-        emit SaleCreated(_saleDetail.owner, sale, saleType);
+        emit SaleCreated(_saleDetail.owner, sale, saleType, salt);
 
         return sale;
     }

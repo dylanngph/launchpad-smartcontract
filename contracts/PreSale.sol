@@ -37,11 +37,15 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 public lpPercent;
     uint256 public softCap;
     uint256 public hardCap;
-    uint256[] public vestingTimes;
-    uint256[] public vestingPercents;
+    // uint256[] public vestingTimes;
+    // uint256[] public vestingPercents;
     bool public isAutoListing;
     uint256 public baseFee;
     uint256 public tokenFee;
+    uint256 public tgeDate;
+    uint256 public tgeReleasePercent;
+    uint256 public cycleDuration;
+    uint256 public cycleReleasePercent;
 
     SaleStatus public status;
     mapping(address => PurchaseDetail) public purchaseDetails;
@@ -77,11 +81,15 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         startTime = _saleDetail.startTime;
         endTime = _saleDetail.endTime;
         lpPercent = _saleDetail.lpPercent;
-        vestingTimes = _saleDetail.vestingTimes;
-        vestingPercents = _saleDetail.vestingPercents;
+        // vestingTimes = _saleDetail.vestingTimes;
+        // vestingPercents = _saleDetail.vestingPercents;
         isAutoListing = _saleDetail.isAutoListing;
         baseFee = _saleDetail.baseFee;
         tokenFee = _saleDetail.tokenFee;
+        tgeDate = _saleDetail.tgeDate;
+        tgeReleasePercent = _saleDetail.tgeReleasePercent;
+        cycleDuration = _saleDetail.cycleDuration;
+        cycleReleasePercent = _saleDetail.cycleReleasePercent;
     }
 
     modifier occurring() {
@@ -207,25 +215,46 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         return (purchaseDetails[purchaser].amount * (1 ether)) / price;
     }
 
+    // function calcClaimableTokenAmount(address purchaser) public view returns (uint256) {
+    //     if (status != SaleStatus.FINALIZED) {
+    //         return 0;
+    //     }
+    //     uint256 totalTokens = calcPurchasedTokenAmount(purchaser);
+    //     uint256 claimableTokens = 0;
+
+    //     if (block.timestamp > vestingTimes[vestingTimes.length - 1]) {
+    //         return totalTokens - purchaseDetails[purchaser].tokenAmountClaimed;
+    //     }
+
+    //     for (uint8 i = 0; i < vestingTimes.length - 1; i++) {
+    //         if (block.timestamp > vestingTimes[i]) {
+    //             claimableTokens = claimableTokens + (totalTokens * (vestingPercents[i])) / RATE_PRECISION_FACTOR;
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     return claimableTokens - purchaseDetails[purchaser].tokenAmountClaimed;
+    // }
+
     function calcClaimableTokenAmount(address purchaser) public view returns (uint256) {
-        if (status != SaleStatus.FINALIZED) {
+        if (status != SaleStatus.FINALIZED || block.timestamp < tgeDate) {
             return 0;
         }
+        uint256 precision = RATE_PRECISION_FACTOR; // gas saving
+
         uint256 totalTokens = calcPurchasedTokenAmount(purchaser);
-        uint256 claimableTokens = 0;
+        uint256 tgeReleaseAmount = (totalTokens * tgeReleasePercent) / precision;
+        uint256 cycleReleaseAmount = (totalTokens * cycleReleasePercent) / precision;
+        uint256 vestingAmount = tgeReleaseAmount + ((block.timestamp - tgeDate) * cycleReleaseAmount) / cycleDuration;
+        uint256 claimableAmount = 0;
 
-        if (block.timestamp > vestingTimes[vestingTimes.length - 1]) {
-            return totalTokens - purchaseDetails[purchaser].tokenAmountClaimed;
+        if (vestingAmount > totalTokens) {
+            claimableAmount = totalTokens - purchaseDetails[purchaser].tokenAmountClaimed;
+        } else {
+            claimableAmount = vestingAmount - purchaseDetails[purchaser].tokenAmountClaimed;
         }
 
-        for (uint8 i = 0; i < vestingTimes.length - 1; i++) {
-            if (block.timestamp > vestingTimes[i]) {
-                claimableTokens = claimableTokens + (totalTokens * (vestingPercents[i])) / RATE_PRECISION_FACTOR;
-            } else {
-                break;
-            }
-        }
-        return claimableTokens - purchaseDetails[purchaser].tokenAmountClaimed;
+        return claimableAmount;
     }
 
     function finalizeInETH() external onlyOwner nonReentrant inQuoteETH {

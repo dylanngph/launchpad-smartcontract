@@ -277,6 +277,32 @@
   },
   {
     "inputs": [],
+    "name": "cycleDuration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "cycleReleasePercent",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "endTime",
     "outputs": [
       {
@@ -356,12 +382,12 @@
             "type": "address"
           },
           {
-            "internalType": "contract IRouter",
+            "internalType": "address",
             "name": "router",
             "type": "address"
           },
           {
-            "internalType": "contract IERC20",
+            "internalType": "address",
             "name": "token",
             "type": "address"
           },
@@ -416,16 +442,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256[]",
-            "name": "vestingTimes",
-            "type": "uint256[]"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "vestingPercents",
-            "type": "uint256[]"
-          },
-          {
             "internalType": "bool",
             "name": "isAutoListing",
             "type": "bool"
@@ -438,6 +454,26 @@
           {
             "internalType": "uint256",
             "name": "tokenFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tgeDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tgeReleasePercent",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cycleDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cycleReleasePercent",
             "type": "uint256"
           }
         ],
@@ -755,6 +791,32 @@
   },
   {
     "inputs": [],
+    "name": "tgeDate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tgeReleasePercent",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "token",
     "outputs": [
       {
@@ -790,44 +852,6 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "vestingPercents",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "vestingTimes",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

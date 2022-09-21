@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 struct SaleDetail {
     address owner;
     address feeTo;
-    IRouter router;
-    IERC20 token;
+    address router;
+    address token;
     bool isQuoteETH;
     uint256 price;
     uint256 listingPrice;
@@ -19,11 +19,15 @@ struct SaleDetail {
     uint256 lpPercent;
     uint256 softCap;
     uint256 hardCap;
-    uint256[] vestingTimes;
-    uint256[] vestingPercents;
+    // uint256[] vestingTimes;
+    // uint256[] vestingPercents;
     bool isAutoListing;
     uint256 baseFee;
     uint256 tokenFee;
+    uint256 tgeDate;
+    uint256 tgeReleasePercent;
+    uint256 cycleDuration;
+    uint256 cycleReleasePercent;
 }
 
 interface IPreSale {

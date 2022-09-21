@@ -59,6 +59,12 @@
         "internalType": "uint8",
         "name": "saleType",
         "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
       }
     ],
     "name": "SaleCreated",
