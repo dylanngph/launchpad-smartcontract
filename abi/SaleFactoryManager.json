@@ -21,19 +21,6 @@
   {
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "_saleFactories",
-        "type": "address[]"
-      }
-    ],
-    "name": "addSaleFactories",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "_saleFactory",
         "type": "address"
@@ -45,31 +32,25 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_sale",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "assignSaleToOwner",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "getAllSales",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "saleType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "saleAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SaleFactoryManager.SaleWithType[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -91,9 +72,26 @@
     "name": "getAllSalesPaging",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "saleType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "saleAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SaleFactoryManager.SaleWithType[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -113,16 +111,28 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "owner",
+        "name": "_owner",
         "type": "address"
       }
     ],
-    "name": "getSales",
+    "name": "getSalesOfOwner",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "saleType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "saleAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SaleFactoryManager.SaleWithType[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -132,12 +142,38 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "owner",
+        "name": "_participant",
         "type": "address"
-      },
+      }
+    ],
+    "name": "getSalesOfParticipant",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint8",
+            "name": "saleType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "saleAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SaleFactoryManager.SaleWithType[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint8",
-        "name": "saleType",
+        "name": "_saleType",
         "type": "uint8"
       }
     ],
@@ -204,19 +240,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "sales",
+    "inputs": [],
+    "name": "saleTypeIdx",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_value",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

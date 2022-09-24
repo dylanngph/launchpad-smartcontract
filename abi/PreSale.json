@@ -149,6 +149,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "addParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       }
@@ -356,6 +369,32 @@
   },
   {
     "inputs": [],
+    "name": "getParticipants",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSaleType",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getWhitelistedList",
     "outputs": [
       {
@@ -518,6 +557,11 @@
         "internalType": "address",
         "name": "_bionLock",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_saleFactory",
+        "type": "address"
       }
     ],
     "name": "initialize",
@@ -541,6 +585,25 @@
   {
     "inputs": [],
     "name": "isBurnUnsold",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "isParticipant",
     "outputs": [
       {
         "internalType": "bool",
@@ -736,25 +799,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "purchasers",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "quoteToken",
     "outputs": [
@@ -785,6 +829,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "removeParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       }
@@ -807,6 +864,19 @@
     "outputs": [
       {
         "internalType": "contract IRouter",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "saleFactory",
+    "outputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
       }

@@ -2,14 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IRouter.sol";
 import "./interfaces/IFactory.sol";
 import "./interfaces/IPreSale.sol";
 import "./interfaces/IBionLock.sol";
+import "./SaleBase.sol";
 
-contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract PreSale is ReentrancyGuardUpgradeable, SaleBase {
     enum SaleStatus {
         STARTED,
         FINALIZED,
@@ -41,8 +42,6 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 public lpPercent;
     uint256 public softCap;
     uint256 public hardCap;
-    // uint256[] public vestingTimes;
-    // uint256[] public vestingPercents;
     bool public isAutoListing;
     uint256 public baseFee;
     uint256 public tokenFee;
@@ -54,7 +53,6 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     SaleStatus public status;
     mapping(address => PurchaseDetail) public purchaseDetails;
-    address[] public purchasers;
     uint256 public currentCap;
 
     mapping(address => bool) public whitelisteds;
@@ -69,7 +67,11 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     event SaleFinalized(address indexed sale);
     event SaleCanceled(address indexed sale);
 
-    function initialize(SaleDetail memory _saleDetail, address _bionLock) external initializer {
+    function initialize(
+        SaleDetail memory _saleDetail,
+        address _bionLock,
+        address _saleFactory
+    ) external initializer {
         // init upgradeable
         _transferOwnership(_saleDetail.owner); // owner
         __ReentrancyGuard_init();
@@ -103,6 +105,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         lockLPDuration = _saleDetail.lockLPDuration;
 
         bionLock = IBionLock(_bionLock);
+        saleFactory = _saleFactory;
     }
 
     modifier occurring() {
@@ -182,7 +185,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         currentCap = currentCap + amount;
         if (purchaseDetail.amount == 0) {
             purchaseDetails[msg.sender].purchaser = msg.sender;
-            purchasers.push(msg.sender);
+            addParticipant(msg.sender);
         }
         purchaseDetails[msg.sender].amount = purchaseDetail.amount + amount;
 
@@ -201,7 +204,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         currentCap = currentCap + amount;
         if (purchaseDetail.amount == 0) {
             purchaseDetails[msg.sender].purchaser = msg.sender;
-            purchasers.push(msg.sender);
+            addParticipant(msg.sender);
         }
         purchaseDetails[msg.sender].amount = purchaseDetail.amount + amount;
 

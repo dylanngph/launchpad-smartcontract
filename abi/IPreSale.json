@@ -137,6 +137,11 @@
         "internalType": "address",
         "name": "_bionLock",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_factory",
+        "type": "address"
       }
     ],
     "name": "initialize",

@@ -35,5 +35,5 @@ struct SaleDetail {
 }
 
 interface IPreSale {
-    function initialize(SaleDetail memory _saleDetail, address _bionLock) external;
+    function initialize(SaleDetail memory _saleDetail, address _bionLock, address _factory) external;
 }

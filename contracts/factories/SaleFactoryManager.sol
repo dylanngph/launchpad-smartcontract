@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "../interfaces/ISaleFactoryBase.sol";
+import "../interfaces/ISaleBase.sol";
 
 contract SaleFactoryManager is Ownable {
     using Counters for Counters.Counter;
@@ -47,33 +48,39 @@ contract SaleFactoryManager is Ownable {
         saleFactories.remove(_saleFactory);
     }
 
-    // function getSalesOfOwner(address _owner) public view returns (address[] memory) {
-    //     return salesOfOwner[_owner].values();
-    // }
+    function getSalesOfParticipant(address _participant) public view returns (SaleWithType[] memory) {
+        SaleWithType[] memory sales = new SaleWithType[](allSales.length());
+        uint256 idx = 0;
+        for (uint256 i = 0; i < allSales.length(); i++) {
+            address sale = allSales.at(i);
+            if (ISaleBase(sale).isParticipant(_participant)) {
+                sales[idx] = SaleWithType(ISaleBase(sale).getSaleType(), sale);
+                idx++;
+            }
+        }
 
-    // function updateSalesOfOwner(address _sale, address _owner) public {
-    //     require(saleFactories.contains(msg.sender), "ONLY_FACTORY");
+        return sales;
+    }
 
-    //     salesOfOwner[_owner].add(_sale);
-    //     allSales.add(_sale);
-    // }
+    function getSalesOfOwner(address _owner) public view returns (SaleWithType[] memory) {
+        SaleWithType[] memory sales = new SaleWithType[](allSales.length());
+        uint256 idx = 0;
+        for (uint256 i = 0; i < allSales.length(); i++) {
+            address sale = allSales.at(i);
+            if (ISaleBase(sale).owner() == _owner) {
+                sales[idx] = SaleWithType(ISaleBase(sale).getSaleType(), sale);
+                idx++;
+            }
+        }
 
-    // function getSalesOfPurchaser(address _purchaser) public view returns (address[] memory) {
-    //     return salesOfPurchaser[_purchaser].values();
-    // }
-
-    // function updateSalesOfPurchaser(address _sale, address _purchaser) public {
-    //     require(saleFactories.contains(msg.sender), "ONLY_FACTORY");
-
-    //     salesOfPurchaser[_purchaser].add(_sale);
-    //     allSales.add(_sale);
-    // }
+        return sales;
+    }
 
     function getSalesOfType(uint8 _saleType) public view returns (address[] memory) {
         address[] memory sales = new address[](allSales.length());
         uint256 idx = 0;
         for (uint256 i = 0; i < allSales.length(); i++) {
-            if (ISaleFactoryBase(allSales.at(i)).saleType() == _saleType) {
+            if (ISaleBase(allSales.at(i)).getSaleType() == _saleType) {
                 sales[idx] = allSales.at(i);
                 idx++;
             }
@@ -82,8 +89,13 @@ contract SaleFactoryManager is Ownable {
         return sales;
     }
 
-    function getAllSales() public view returns (address[] memory) {
-        return allSales.values();
+    function getAllSales() public view returns (SaleWithType[] memory) {
+        SaleWithType[] memory sales = new SaleWithType[](allSales.length());
+        for (uint256 i = 0; i < allSales.length(); i++) {
+            sales[i] = SaleWithType(ISaleBase(allSales.at(i)).getSaleType(), allSales.at(i));
+        }
+
+        return sales;
     }
 
     function getAllSalesPaging(uint256 _page, uint256 _limit)
@@ -108,13 +120,13 @@ contract SaleFactoryManager is Ownable {
         if (end > length) {
             end = length;
         }
-        SaleWithType[] memory saleAddresses = new SaleWithType[](end - _page * _limit);
+        SaleWithType[] memory sales = new SaleWithType[](end - _page * _limit);
         for (uint256 i = _page * _limit; i < end; i++) {
-            saleAddresses[i - _page * _limit] = SaleWithType({
+            sales[i - _page * _limit] = SaleWithType({
                 saleType: ISaleFactoryBase(allSales.at(i)).saleType(),
                 saleAddress: allSales.at(i)
             });
         }
-        return (saleAddresses, _page, _limit, totalPages);
+        return (sales, _page, _limit, totalPages);
     }
 }
