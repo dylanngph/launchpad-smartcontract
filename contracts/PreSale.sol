@@ -5,7 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IRouter.sol";
+import "./interfaces/IFactory.sol";
 import "./interfaces/IPreSale.sol";
+import "./interfaces/IBionLock.sol";
 
 contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     enum SaleStatus {
@@ -28,6 +30,8 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     IERC20 public token;
     IERC20 public quoteToken;
     bool public isQuoteETH;
+    bool public isWhitelistEnabled;
+    bool public isBurnUnsold;
     uint256 public price;
     uint256 public listingPrice;
     uint256 public minPurchase;
@@ -46,15 +50,18 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 public tgeReleasePercent;
     uint256 public cycleDuration;
     uint256 public cycleReleasePercent;
+    uint256 public lockLPDuration; // in days
 
     SaleStatus public status;
     mapping(address => PurchaseDetail) public purchaseDetails;
     address[] public purchasers;
     uint256 public currentCap;
 
-    bool public isWhitelistEnabled;
     mapping(address => bool) public whitelisteds;
     address[] public whitelistedList;
+
+    IBionLock public bionLock;
+    uint256 public lockId;
 
     event Purchased(address indexed sale, address indexed purchaser, uint256 amount);
     event Claimed(address indexed sale, address indexed purchaser, uint256 amount);
@@ -62,7 +69,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     event SaleFinalized(address indexed sale);
     event SaleCanceled(address indexed sale);
 
-    function initialize(SaleDetail memory _saleDetail) external initializer {
+    function initialize(SaleDetail memory _saleDetail, address _bionLock) external initializer {
         // init upgradeable
         _transferOwnership(_saleDetail.owner); // owner
         __ReentrancyGuard_init();
@@ -71,7 +78,10 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         feeTo = _saleDetail.feeTo;
         router = IRouter(_saleDetail.router);
         token = IERC20(_saleDetail.token);
+        quoteToken = _saleDetail.isQuoteETH ? IERC20(address(0)) : IERC20(_saleDetail.quoteToken);
         isQuoteETH = _saleDetail.isQuoteETH;
+        isWhitelistEnabled = _saleDetail.isWhitelistEnabled;
+        isBurnUnsold = _saleDetail.isBurnUnsold;
         price = _saleDetail.price;
         listingPrice = _saleDetail.listingPrice;
         minPurchase = _saleDetail.minPurchase;
@@ -90,6 +100,9 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         tgeReleasePercent = _saleDetail.tgeReleasePercent;
         cycleDuration = _saleDetail.cycleDuration;
         cycleReleasePercent = _saleDetail.cycleReleasePercent;
+        lockLPDuration = _saleDetail.lockLPDuration;
+
+        bionLock = IBionLock(_bionLock);
     }
 
     modifier occurring() {
@@ -176,7 +189,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit Purchased(address(this), msg.sender, amount);
     }
 
-    function purchase(uint256 amount) external occurring validAmount(amount) {
+    function purchase(uint256 amount) external occurring validAmount(amount) inQuoteToken {
         if (isWhitelistEnabled) {
             require(whitelisteds[msg.sender], "NOT_WHITELISTED");
         }
@@ -214,27 +227,6 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function calcPurchasedTokenAmount(address purchaser) public view returns (uint256) {
         return (purchaseDetails[purchaser].amount * (1 ether)) / price;
     }
-
-    // function calcClaimableTokenAmount(address purchaser) public view returns (uint256) {
-    //     if (status != SaleStatus.FINALIZED) {
-    //         return 0;
-    //     }
-    //     uint256 totalTokens = calcPurchasedTokenAmount(purchaser);
-    //     uint256 claimableTokens = 0;
-
-    //     if (block.timestamp > vestingTimes[vestingTimes.length - 1]) {
-    //         return totalTokens - purchaseDetails[purchaser].tokenAmountClaimed;
-    //     }
-
-    //     for (uint8 i = 0; i < vestingTimes.length - 1; i++) {
-    //         if (block.timestamp > vestingTimes[i]) {
-    //             claimableTokens = claimableTokens + (totalTokens * (vestingPercents[i])) / RATE_PRECISION_FACTOR;
-    //         } else {
-    //             break;
-    //         }
-    //     }
-    //     return claimableTokens - purchaseDetails[purchaser].tokenAmountClaimed;
-    // }
 
     function calcClaimableTokenAmount(address purchaser) public view returns (uint256) {
         if (status != SaleStatus.FINALIZED || block.timestamp < tgeDate) {
@@ -288,6 +280,15 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             payable(owner).transfer(currentCap);
         }
 
+        uint256 totalTokensRequired = calcTotalTokensRequired();
+        uint256 currentTokensRequired = calcCurrentTokensRequired();
+        uint256 unsoldTokens = totalTokensRequired - currentTokensRequired;
+        if (isBurnUnsold) {
+            token.transfer(0x000000000000000000000000000000000000dEaD, unsoldTokens);
+        } else {
+            token.transfer(owner, unsoldTokens);
+        }
+
         emit SaleFinalized(address(this));
     }
 
@@ -304,21 +305,53 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             token.approve(address(router), tokenLiqAmount);
             quoteToken.approve(address(router), currencyLiqAmount);
 
-            router.addLiquidity(
-                address(token),
-                address(quoteToken),
-                tokenLiqAmount,
-                currencyLiqAmount,
-                0,
-                0,
-                owner,
-                block.timestamp
-            );
+            if (lockLPDuration > 0) {
+                router.addLiquidity(
+                    address(token),
+                    address(quoteToken),
+                    tokenLiqAmount,
+                    currencyLiqAmount,
+                    0,
+                    0,
+                    address(this),
+                    block.timestamp
+                );
+
+                address pair = IFactory(router.factory()).getPair(address(token), address(quoteToken));
+                lockId = bionLock.lock(
+                    owner,
+                    pair,
+                    true,
+                    IERC20(pair).balanceOf(address(this)),
+                    block.timestamp + lockLPDuration,
+                    ""
+                );
+            } else {
+                router.addLiquidity(
+                    address(token),
+                    address(quoteToken),
+                    tokenLiqAmount,
+                    currencyLiqAmount,
+                    0,
+                    0,
+                    owner,
+                    block.timestamp
+                );
+            }
 
             // for project
             quoteToken.transfer(owner, currentCap - currencyLiqAmount);
         } else {
             quoteToken.transfer(owner, currentCap);
+        }
+
+        uint256 totalTokensRequired = calcTotalTokensRequired();
+        uint256 currentTokensRequired = calcCurrentTokensRequired();
+        uint256 unsoldTokens = totalTokensRequired - currentTokensRequired;
+        if (isBurnUnsold) {
+            token.transfer(0x000000000000000000000000000000000000dEaD, unsoldTokens);
+        } else {
+            token.transfer(owner, unsoldTokens);
         }
 
         emit SaleFinalized(address(this));

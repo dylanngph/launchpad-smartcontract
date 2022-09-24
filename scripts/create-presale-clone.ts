@@ -36,12 +36,15 @@ async function main() {
         tgeReleasePercent: 5000,
         cycleDuration: 3600,
         cycleReleasePercent: 5000,
+        isBurnUnsold: true,
+        isWhitelistEnabled: false,
+        quoteToken: ethers.constants.AddressZero,
     };
 
     // const salt = ethers.utils.keccak256(
     //     projectOwner.address + paddingEven("" + (await projectOwner.getTransactionCount()))
     // );
-    const salt = "0x3633323933383035613362366233353461353733363862620000000000000000";
+    const salt = "0x3633326164653839616636643032303135316235356336360000000000000000";
 
     await preSaleFactory.connect(projectOwner).create(mockDetail, salt, {
         value: parseEther("0.1"),
