@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 interface IRouter {
+    function factory() external pure returns (address);
+
+    function WETH() external pure returns (address);
+
     function addLiquidityETH(
         address token,
         uint256 amountTokenDesired,

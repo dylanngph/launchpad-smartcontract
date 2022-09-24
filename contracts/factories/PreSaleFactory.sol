@@ -5,11 +5,20 @@ import "./SaleFactoryBase.sol";
 import "../interfaces/IPreSale.sol";
 
 contract PreSaleFactory is SaleFactoryBase {
+    address public bionLock;
+
     constructor(
         uint8 _saleType,
         address _implementation,
-        uint256 _fee
-    ) SaleFactoryBase(_saleType, _implementation, _fee) {}
+        uint256 _fee,
+        address _bionLock
+    ) SaleFactoryBase(_saleType, _implementation, _fee) {
+        bionLock = _bionLock;
+    }
+
+    function setBionLock(address _bionLock) external onlyOwner {
+        bionLock = _bionLock;
+    }
 
     function create(SaleDetail memory _saleDetail, bytes32 salt)
         external
@@ -21,7 +30,7 @@ contract PreSaleFactory is SaleFactoryBase {
         refundExcessiveFee();
         payable(feeTo).transfer(fee);
         sale = clone(salt);
-        IPreSale(sale).initialize(_saleDetail);
+        IPreSale(sale).initialize(_saleDetail, bionLock);
 
         emit SaleCreated(_saleDetail.owner, sale, saleType, salt);
 

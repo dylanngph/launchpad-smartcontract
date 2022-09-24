@@ -9,7 +9,10 @@ struct SaleDetail {
     address feeTo;
     address router;
     address token;
+    address quoteToken;
     bool isQuoteETH;
+    bool isWhitelistEnabled;
+    bool isBurnUnsold;
     uint256 price;
     uint256 listingPrice;
     uint256 minPurchase;
@@ -28,8 +31,9 @@ struct SaleDetail {
     uint256 tgeReleasePercent;
     uint256 cycleDuration;
     uint256 cycleReleasePercent;
+    uint256 lockLPDuration; // in days    
 }
 
 interface IPreSale {
-    function initialize(SaleDetail memory _saleDetail) external;
+    function initialize(SaleDetail memory _saleDetail, address _bionLock) external;
 }

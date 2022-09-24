@@ -185,6 +185,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "bionLock",
+    "outputs": [
+      {
+        "internalType": "contract IBionLock",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -392,8 +405,23 @@
             "type": "address"
           },
           {
+            "internalType": "address",
+            "name": "quoteToken",
+            "type": "address"
+          },
+          {
             "internalType": "bool",
             "name": "isQuoteETH",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isWhitelistEnabled",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isBurnUnsold",
             "type": "bool"
           },
           {
@@ -475,11 +503,21 @@
             "internalType": "uint256",
             "name": "cycleReleasePercent",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockLPDuration",
+            "type": "uint256"
           }
         ],
         "internalType": "struct SaleDetail",
         "name": "_saleDetail",
         "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "_bionLock",
+        "type": "address"
       }
     ],
     "name": "initialize",
@@ -490,6 +528,19 @@
   {
     "inputs": [],
     "name": "isAutoListing",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isBurnUnsold",
     "outputs": [
       {
         "internalType": "bool",
@@ -529,6 +580,32 @@
   {
     "inputs": [],
     "name": "listingPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lockId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lockLPDuration",
     "outputs": [
       {
         "internalType": "uint256",
