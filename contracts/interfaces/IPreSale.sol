@@ -22,8 +22,6 @@ struct SaleDetail {
     uint256 lpPercent;
     uint256 softCap;
     uint256 hardCap;
-    // uint256[] vestingTimes;
-    // uint256[] vestingPercents;
     bool isAutoListing;
     uint256 baseFee;
     uint256 tokenFee;
@@ -31,9 +29,11 @@ struct SaleDetail {
     uint256 tgeReleasePercent;
     uint256 cycleDuration;
     uint256 cycleReleasePercent;
-    uint256 lockLPDuration; // in days    
+    uint256 lockLPDuration;
 }
 
 interface IPreSale {
     function initialize(SaleDetail memory _saleDetail, address _bionLock) external;
+
+    function calcTotalTokensRequired() external view returns (uint256);
 }

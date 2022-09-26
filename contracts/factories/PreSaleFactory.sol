@@ -30,7 +30,10 @@ contract PreSaleFactory is SaleFactoryBase {
         refundExcessiveFee();
         payable(feeTo).transfer(fee);
         sale = clone(salt);
+
         IPreSale(sale).initialize(_saleDetail, bionLock);
+
+        IERC20(_saleDetail.token).transferFrom(msg.sender, sale, IPreSale(sale).calcTotalTokensRequired());
 
         emit SaleCreated(_saleDetail.owner, sale, saleType, salt);
 
