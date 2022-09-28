@@ -36,4 +36,6 @@ interface IPreSale {
     function initialize(SaleDetail memory _saleDetail, address _bionLock) external;
 
     function calcTotalTokensRequired() external view returns (uint256);
+
+    function quoteTokenDecimals() external view returns (uint256);
 }

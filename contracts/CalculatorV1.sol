@@ -1,7 +1,5 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
-
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract CalculatorV1 is Initializable {

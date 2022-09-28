@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IRouter.sol";
 import "./interfaces/IFactory.sol";
 import "./interfaces/IPreSale.sol";
 import "./interfaces/IBionLock.sol";
-import "hardhat/console.sol";
 
 contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     enum SaleStatus {
@@ -59,6 +59,8 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => bool) public whitelisteds;
     address[] public whitelistedList;
 
+    uint256 public tokenDecimals;
+    uint256 public quoteTokenDecimals;
     IBionLock public bionLock;
     uint256 public lockId;
 
@@ -112,6 +114,8 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         lockLPDuration = _saleDetail.lockLPDuration;
 
         bionLock = IBionLock(_bionLock);
+        tokenDecimals = IERC20Metadata(address(token)).decimals();
+        quoteTokenDecimals = isQuoteETH ? 18 : IERC20Metadata(address(quoteToken)).decimals();
     }
 
     modifier occurring() {
@@ -230,26 +234,25 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function calcTotalTokensRequired() public view returns (uint256) {
         return
-            (((hardCap * (RATE_PRECISION_FACTOR + baseFee)) / RATE_PRECISION_FACTOR) * (1 ether)) /
+            (((hardCap * (RATE_PRECISION_FACTOR + baseFee)) / RATE_PRECISION_FACTOR) * 10**tokenDecimals) /
             price +
-            (((hardCap * lpPercent) / RATE_PRECISION_FACTOR) * (1 ether)) /
+            (((hardCap * lpPercent) / RATE_PRECISION_FACTOR) * 10**tokenDecimals) /
             listingPrice;
     }
 
     function calcCurrentTokensRequired() public view returns (uint256) {
         return
-            (((currentCap * (RATE_PRECISION_FACTOR + baseFee)) / RATE_PRECISION_FACTOR) * (1 ether)) /
+            (((currentCap * (RATE_PRECISION_FACTOR + baseFee)) / RATE_PRECISION_FACTOR) * 10**tokenDecimals) /
             price +
-            (((currentCap * lpPercent) / RATE_PRECISION_FACTOR) * (1 ether)) /
+            (((currentCap * lpPercent) / RATE_PRECISION_FACTOR) * 10**tokenDecimals) /
             listingPrice;
     }
 
     function calcPurchasedTokenAmount(address purchaser) public view returns (uint256) {
-        return (purchaseDetails[purchaser].amount * (1 ether)) / price;
+        return (purchaseDetails[purchaser].amount * 10**tokenDecimals) / price;
     }
 
     function calcClaimableTokenAmount(address purchaser) public view returns (uint256) {
-        console.log("purchaser: %s", purchaser);
         if (status != SaleStatus.FINALIZED || block.timestamp < tgeDate) {
             return 0;
         }
@@ -282,14 +285,12 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 baseFeeAmount = 0;
         if (baseFee > 0) {
             baseFeeAmount = (currentCap * baseFee) / RATE_PRECISION_FACTOR;
-            console.log("baseFeeAmount: %s", baseFeeAmount);
             payable(feeTo).transfer(baseFeeAmount);
         }
 
         uint256 tokenFeeAmount = 0;
         if (tokenFee > 0) {
-            tokenFeeAmount = (((currentCap * (1 ether)) / price) * tokenFee) / RATE_PRECISION_FACTOR;
-            console.log("tokenFeeAmount: %s", tokenFeeAmount);
+            tokenFeeAmount = (((currentCap * 10**tokenDecimals) / price) * tokenFee) / RATE_PRECISION_FACTOR;
             token.transfer(feeTo, tokenFeeAmount);
         }
 
@@ -297,10 +298,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         if (isAutoListing) {
             // for liquidity
             uint256 ethLiqAmount = (currentCap * lpPercent) / RATE_PRECISION_FACTOR;
-            uint256 tokenLiqAmount = (ethLiqAmount * (1 ether)) / listingPrice;
-
-            console.log("ethLiqAmount: %s", ethLiqAmount);
-            console.log("tokenLiqAmount: %s", tokenLiqAmount);
+            uint256 tokenLiqAmount = (ethLiqAmount * 10**tokenDecimals) / listingPrice;
 
             token.approve(address(router), tokenLiqAmount);
             if (lockLPDuration > 0) {
@@ -343,7 +341,6 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         uint256 unsoldTokens = calcTotalTokensRequired() - calcCurrentTokensRequired();
-        console.log("unsoldTokens: %s", unsoldTokens);
         if (isBurnUnsold) {
             token.transfer(0x000000000000000000000000000000000000dEaD, unsoldTokens);
         } else {
@@ -360,14 +357,12 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 baseFeeAmount = 0;
         if (baseFee > 0) {
             baseFeeAmount = (currentCap * baseFee) / RATE_PRECISION_FACTOR;
-            console.log("baseFeeAmount: %s", baseFeeAmount);
-            payable(feeTo).transfer(baseFeeAmount);
+            quoteToken.transfer(feeTo, baseFeeAmount);
         }
 
         uint256 tokenFeeAmount = 0;
         if (tokenFee > 0) {
-            tokenFeeAmount = (((currentCap * (1 ether)) / price) * tokenFee) / RATE_PRECISION_FACTOR;
-            console.log("tokenFeeAmount: %s", tokenFeeAmount);
+            tokenFeeAmount = (((currentCap * 10**tokenDecimals) / price) * tokenFee) / RATE_PRECISION_FACTOR;
             token.transfer(feeTo, tokenFeeAmount);
         }
 
@@ -375,7 +370,7 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         if (isAutoListing) {
             // for liquidity
             uint256 currencyLiqAmount = (currentCap * lpPercent) / RATE_PRECISION_FACTOR;
-            uint256 tokenLiqAmount = (currencyLiqAmount * (1 ether)) / listingPrice;
+            uint256 tokenLiqAmount = (currencyLiqAmount * 10**tokenDecimals) / listingPrice;
 
             token.approve(address(router), tokenLiqAmount);
             quoteToken.approve(address(router), currencyLiqAmount);

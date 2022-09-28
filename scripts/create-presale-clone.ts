@@ -39,6 +39,7 @@ async function main() {
         isBurnUnsold: true,
         isWhitelistEnabled: false,
         quoteToken: ethers.constants.AddressZero,
+        lockLPDuration: 86400,
     };
 
     // const salt = ethers.utils.keccak256(

@@ -1,7 +1,7 @@
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import chai, {expect} from "chai";
 import {solidity} from "ethereum-waffle";
-import {parseEther} from "ethers/lib/utils";
+import {parseEther, parseUnits} from "ethers/lib/utils";
 import {ethers, testUtils} from "hardhat";
 import PancakeFactoryABI from "../abi/PancakeFactory.json";
 import PancakePairABI from "../abi/PancakePair.json";
@@ -20,7 +20,7 @@ import {Router} from "../types/Router";
 chai.use(solidity);
 const {assert} = chai;
 
-describe("Launchpad", function () {
+describe("Launchpad ETH", function () {
     let admin: SignerWithAddress;
     let projectOwner: SignerWithAddress;
     let user1: SignerWithAddress;
@@ -40,17 +40,19 @@ describe("Launchpad", function () {
 
     let NOW: number;
 
+    const TOKEN_DECIMALS = 18;
+    const QUOTE_TOKEN_DECIMALS = 9;
     const SALE_CREATION_FEE = parseEther(process.env.PRESALE_CREATION_FEE!);
-    const PRICE = parseEther("0.0001");
-    const SOFT_CAP = parseEther("500");
-    const HARD_CAP = parseEther("1000");
+    const PRICE = parseUnits("0.0001", QUOTE_TOKEN_DECIMALS);
+    const SOFT_CAP = parseUnits("500", QUOTE_TOKEN_DECIMALS);
+    const HARD_CAP = parseUnits("1000", QUOTE_TOKEN_DECIMALS);
     const LP_PERCENT = 60 * 100;
-    const LISITNG_PRICE = parseEther("0.0002");
+    const LISITNG_PRICE = parseUnits("0.0002", QUOTE_TOKEN_DECIMALS);
     const TGE_RELEASE_PERCENT = 50 * 100;
-    const MIN_PURCHASE_AMOUNT = parseEther("0.1");
-    const MAX_PURCHASE_AMOUNT = parseEther("1000");
-    const USER1_PURCHASE_AMOUNT = parseEther("100");
-    const USER2_PURCHASE_AMOUNT = parseEther("900");
+    const MIN_PURCHASE_AMOUNT = parseUnits("0.1", QUOTE_TOKEN_DECIMALS);
+    const MAX_PURCHASE_AMOUNT = parseUnits("1000", QUOTE_TOKEN_DECIMALS);
+    const USER1_PURCHASE_AMOUNT = parseUnits("100", QUOTE_TOKEN_DECIMALS);
+    const USER2_PURCHASE_AMOUNT = parseUnits("900", QUOTE_TOKEN_DECIMALS);
     const BASE_FEE = 200;
     const TOKEN_FEE = 200;
     const CYCLE_DURATION = 86400;
@@ -79,8 +81,10 @@ describe("Launchpad", function () {
             bionLock.address
         );
 
-        mockToken = <MockERC20>await (await ethers.getContractFactory("MockERC20")).deploy("MockToken", "MTK");
-        await mockToken.mint(projectOwner.address, parseEther("100000000"));
+        mockToken = <MockERC20>(
+            await (await ethers.getContractFactory("MockERC20")).deploy("MockToken", "MTK", TOKEN_DECIMALS)
+        );
+        await mockToken.mint(projectOwner.address, parseUnits("100000000", TOKEN_DECIMALS));
         await mockToken.connect(projectOwner).approve(preSaleFactory.address, ethers.constants.MaxUint256);
 
         NOW = await testUtils.time.latest();
@@ -88,7 +92,7 @@ describe("Launchpad", function () {
         saleDetail = {
             baseFee: BASE_FEE,
             tokenFee: TOKEN_FEE,
-            feeTo: projectOwner.address,
+            feeTo: admin.address,
             isQuoteETH: true,
             price: PRICE,
             startTime: NOW,
@@ -126,7 +130,7 @@ describe("Launchpad", function () {
             const totalTokensRequired = HARD_CAP.div(PRICE)
                 .add(HARD_CAP.mul(LP_PERCENT).div(10000).div(LISITNG_PRICE))
                 .add(HARD_CAP.mul(BASE_FEE).div(10000).div(PRICE))
-                .mul(parseEther("1"));
+                .mul(parseUnits("1", TOKEN_DECIMALS));
             console.log("🚀 ~ file: Launchpad.ts ~ line 120 ~ it ~ totalTokensRequired", totalTokensRequired);
 
             await expect(
@@ -159,9 +163,13 @@ describe("Launchpad", function () {
 
         it("should let owner finalize sale", async () => {
             const currentCap = await preSale.currentCap();
+            const ownerReceivedRaisedAmount = currentCap
+                .sub(currentCap.mul(LP_PERCENT).div(10000))
+                .sub(currentCap.mul(BASE_FEE).div(10000));
+
             await expect(() => preSale.connect(projectOwner).finalizeInETH()).changeEtherBalance(
                 projectOwner,
-                currentCap.sub(currentCap.mul(LP_PERCENT).div(10000))
+                ownerReceivedRaisedAmount
             );
 
             pair = <PancakePair>(
@@ -186,7 +194,10 @@ describe("Launchpad", function () {
             await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
                 mockToken,
                 user1,
-                USER1_PURCHASE_AMOUNT.mul(TGE_RELEASE_PERCENT).div(10000).mul(parseEther("1")).div(PRICE)
+                USER1_PURCHASE_AMOUNT.mul(TGE_RELEASE_PERCENT)
+                    .div(10000)
+                    .mul(parseUnits("1", TOKEN_DECIMALS))
+                    .div(PRICE)
             );
 
             // claim first cycle
@@ -194,7 +205,10 @@ describe("Launchpad", function () {
             await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
                 mockToken,
                 user1,
-                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseEther("1")).div(PRICE)
+                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
+                    .div(10000)
+                    .mul(parseUnits("1", TOKEN_DECIMALS))
+                    .div(PRICE)
             );
 
             // claim second cycle
@@ -202,7 +216,10 @@ describe("Launchpad", function () {
             await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
                 mockToken,
                 user1,
-                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseEther("1")).div(PRICE)
+                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
+                    .div(10000)
+                    .mul(parseUnits("1", TOKEN_DECIMALS))
+                    .div(PRICE)
             );
 
             // claim third cycle
@@ -212,7 +229,7 @@ describe("Launchpad", function () {
                 user1,
                 USER1_PURCHASE_AMOUNT.mul(10 * 100)
                     .div(10000)
-                    .mul(parseEther("1"))
+                    .mul(parseUnits("1", TOKEN_DECIMALS))
                     .div(PRICE)
             );
 
@@ -221,7 +238,7 @@ describe("Launchpad", function () {
             // await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
             //     mockToken,
             //     user1,
-            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseEther("1")).div(PRICE)
+            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseUnits("1", TOKEN_DECIMALS)).div(PRICE)
             // );
 
             // // claim fifth cycle
@@ -229,7 +246,7 @@ describe("Launchpad", function () {
             // await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
             //     mockToken,
             //     user1,
-            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseEther("1")).div(PRICE)
+            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseUnits("1", TOKEN_DECIMALS)).div(PRICE)
             // );
 
             // claim sixth cycle
@@ -241,7 +258,7 @@ describe("Launchpad", function () {
             await expect(() => preSale.connect(user2).claim()).to.changeTokenBalance(
                 mockToken,
                 user2,
-                USER2_PURCHASE_AMOUNT.mul(parseEther("1")).div(PRICE)
+                USER2_PURCHASE_AMOUNT.mul(parseUnits("1", TOKEN_DECIMALS)).div(PRICE)
             );
 
             // finish sale
