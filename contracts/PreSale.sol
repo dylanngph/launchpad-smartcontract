@@ -82,6 +82,9 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             (_saleDetail.tgeReleasePercent + _saleDetail.cycleReleasePercent) <= RATE_PRECISION_FACTOR,
             "INVALID_RELEASE_PERCENT"
         );
+        if (_saleDetail.tgeReleasePercent != RATE_PRECISION_FACTOR) {
+            require(_saleDetail.cycleDuration > 0 && _saleDetail.cycleReleasePercent > 0, "INVALID_CYCLE_DURATION");
+        }
         require(
             _saleDetail.startTime < _saleDetail.endTime && _saleDetail.endTime < _saleDetail.tgeDate,
             "INVALID_TIME"
@@ -259,6 +262,10 @@ contract PreSale is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 precision = RATE_PRECISION_FACTOR; // gas saving
 
         uint256 totalTokens = calcPurchasedTokenAmount(purchaser);
+        if (tgeReleasePercent == precision) {
+            return totalTokens;
+        }
+
         uint256 tgeReleaseAmount = (totalTokens * tgeReleasePercent) / precision;
         uint256 cycleReleaseAmount = (totalTokens * cycleReleasePercent) / precision;
         uint256 totalCycles = (RATE_PRECISION_FACTOR - tgeReleasePercent) /

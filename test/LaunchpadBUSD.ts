@@ -49,15 +49,17 @@ describe("Launchpad BUSD", function () {
     const HARD_CAP = parseUnits("1000", QUOTE_TOKEN_DECIMALS);
     const LP_PERCENT = 60 * 100;
     const LISITNG_PRICE = parseUnits("0.0002", QUOTE_TOKEN_DECIMALS);
-    const TGE_RELEASE_PERCENT = 50 * 100;
+    const TGE_RELEASE_PERCENT = 100 * 100;
     const MIN_PURCHASE_AMOUNT = parseUnits("0.2", QUOTE_TOKEN_DECIMALS);
     const MAX_PURCHASE_AMOUNT = parseUnits("1000", QUOTE_TOKEN_DECIMALS);
     const USER1_PURCHASE_AMOUNT = parseUnits("100", QUOTE_TOKEN_DECIMALS);
     const USER2_PURCHASE_AMOUNT = parseUnits("900", QUOTE_TOKEN_DECIMALS);
     const BASE_FEE = 200;
     const TOKEN_FEE = 200;
-    const CYCLE_DURATION = 86400;
-    const CYCLE_RELEASE_PERCENT = 20 * 100;
+    // const CYCLE_DURATION = 86400;
+    const CYCLE_DURATION = 0;
+    // const CYCLE_RELEASE_PERCENT = 20 * 100;
+    const CYCLE_RELEASE_PERCENT = 0;
     const LOCK_LP_DURATION = 86400 * 30;
 
     before(async () => {
@@ -210,37 +212,37 @@ describe("Launchpad BUSD", function () {
             );
 
             // claim first cycle
-            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION);
-            await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
-                mockToken,
-                user1,
-                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
-                    .div(10000)
-                    .mul(parseUnits("1", TOKEN_DECIMALS))
-                    .div(PRICE)
-            );
+            // await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION);
+            // await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
+            //     mockToken,
+            //     user1,
+            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
+            //         .div(10000)
+            //         .mul(parseUnits("1", TOKEN_DECIMALS))
+            //         .div(PRICE)
+            // );
 
-            // claim second cycle
-            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 2);
-            await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
-                mockToken,
-                user1,
-                USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
-                    .div(10000)
-                    .mul(parseUnits("1", TOKEN_DECIMALS))
-                    .div(PRICE)
-            );
+            // // claim second cycle
+            // await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 2);
+            // await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
+            //     mockToken,
+            //     user1,
+            //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT)
+            //         .div(10000)
+            //         .mul(parseUnits("1", TOKEN_DECIMALS))
+            //         .div(PRICE)
+            // );
 
-            // claim third cycle
-            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 3);
-            await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
-                mockToken,
-                user1,
-                USER1_PURCHASE_AMOUNT.mul(10 * 100)
-                    .div(10000)
-                    .mul(parseUnits("1", TOKEN_DECIMALS))
-                    .div(PRICE)
-            );
+            // // claim third cycle
+            // await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 3);
+            // await expect(() => preSale.connect(user1).claim()).to.changeTokenBalance(
+            //     mockToken,
+            //     user1,
+            //     USER1_PURCHASE_AMOUNT.mul(10 * 100)
+            //         .div(10000)
+            //         .mul(parseUnits("1", TOKEN_DECIMALS))
+            //         .div(PRICE)
+            // );
 
             // // claim fourth cycle
             // await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 4);
@@ -258,12 +260,12 @@ describe("Launchpad BUSD", function () {
             //     USER1_PURCHASE_AMOUNT.mul(CYCLE_RELEASE_PERCENT).div(10000).mul(parseUnits("1")).div(PRICE)
             // );
 
-            // claim sixth cycle
-            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 6);
-            await expect(preSale.connect(user1).claim()).to.revertedWith("NO_CLAIMABLE_TOKEN");
+            // // claim sixth cycle
+            // await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 6);
+            // await expect(preSale.connect(user1).claim()).to.revertedWith("NO_CLAIMABLE_TOKEN");
 
             // user 2 claim
-            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + CYCLE_DURATION * 10);
+            await testUtils.time.increaseTo((await preSale.tgeDate()).toNumber() + 100);
             await expect(() => preSale.connect(user2).claim()).to.changeTokenBalance(
                 mockToken,
                 user2,
