@@ -30,6 +30,8 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
     mapping(uint => uint) private _availableTokens;
     uint256 private _numAvailableTokens;
     uint256 immutable _maxSupply;
+    uint256 public startIndex;
+    address public contractMinter;
     // Mapping from token ID to owner address
     mapping(uint256 => address) private _owners;
 
@@ -264,14 +266,16 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
     }
 
     function _mintRandom(address to, uint _numToMint) internal virtual {
-        require(_msgSender() == tx.origin, "Contracts cannot mint");
+        if (_msgSender() != contractMinter) {
+            require(_msgSender() == tx.origin, "Contracts cannot mint");
+        }
         require(to != address(0), "ERC721: mint to the zero address");
         require(_numToMint > 0, "ERC721r: need to mint at least one token");
 
         // TODO: Probably don't need this as it will underflow and revert automatically in this case
         require(_numAvailableTokens >= _numToMint, "ERC721r: minting more tokens than available");
 
-        uint updatedNumAvailableTokens = _numAvailableTokens;
+        uint updatedNumAvailableTokens = _numAvailableTokens + startIndex;
         for (uint256 i; i < _numToMint; ++i) {
             // Do this ++ unchecked?
             uint256 tokenId = getRandomAvailableTokenId(to, updatedNumAvailableTokens);
@@ -281,7 +285,7 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
             --updatedNumAvailableTokens;
         }
 
-        _numAvailableTokens = updatedNumAvailableTokens;
+        _numAvailableTokens = updatedNumAvailableTokens - startIndex;
         _balances[to] += _numToMint;
     }
 
@@ -300,7 +304,7 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
                 )
             )
         );
-        uint256 randomIndex = randomNum % updatedNumAvailableTokens;
+        uint256 randomIndex = (randomNum % (updatedNumAvailableTokens - startIndex)) + startIndex;
         return getAvailableTokenAtIndex(randomIndex, updatedNumAvailableTokens);
     }
 
@@ -342,7 +346,7 @@ contract ERC721r is Context, ERC165, IERC721, IERC721Metadata {
         require(to != address(0), "ERC721: mint to the zero address");
         require(_numAvailableTokens >= 1, "ERC721r: minting more tokens than available");
 
-        uint tokenId = getAvailableTokenAtIndex(index, _numAvailableTokens);
+        uint tokenId = getAvailableTokenAtIndex(index, _numAvailableTokens + startIndex);
         --_numAvailableTokens;
 
         _mintIdWithoutBalanceUpdate(to, tokenId);
@@ -500,7 +504,22 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
     // Mapping from token id to position in the allTokens array
     mapping(uint256 => uint256) private _allTokensIndex;
 
-    constructor() ERC721r("BionAvatar", "BIONA", 310) {}
+    constructor(uint256 _startIndex, uint256 _totalSupply) ERC721r("BionAvatar", "BIONA", _totalSupply) {
+        startIndex = _startIndex;
+    }
+
+    modifier onlyContractMinter() {
+        require(_msgSender() == contractMinter, "BionAvatar: caller is not the contract minter");
+        _;
+    }
+
+    function setStartIndex(uint256 _startIndex) external onlyOwner {
+        startIndex = _startIndex;
+    }
+
+    function setContractMinter(address _contractMinter) external onlyOwner {
+        contractMinter = _contractMinter;
+    }
 
     function getWhitelist() public view returns (address[] memory) {
         uint256 length = _whitelist.length();
@@ -527,11 +546,23 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
         return _whitelist.contains(account);
     }
 
+    function setWhitelistEnabled(bool enabled) public onlyOwner {
+        isWhitelistEnabled = enabled;
+    }
+
     function mint() public {
         if (isWhitelistEnabled) {
             require(isWhitelisted(msg.sender), "BionAvatar: not whitelisted");
         }
 
+        _mintRandom(msg.sender, 1);
+    }
+
+    function mintTo(address to) public onlyOwner {
+        _mintRandom(to, 1);
+    }
+
+    function forBatchMint() public onlyContractMinter {
         _mintRandom(msg.sender, 1);
     }
 
@@ -546,7 +577,7 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721r) returns (bool) {
         return interfaceId == type(IERC721Enumerable).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -554,14 +585,14 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
      * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
      */
     function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override returns (uint256) {
-        require(index < ERC721.balanceOf(owner), "ERC721Enumerable: owner index out of bounds");
+        require(index < ERC721r.balanceOf(owner), "ERC721Enumerable: owner index out of bounds");
         return _ownedTokens[owner][index];
     }
 
     /**
      * @dev See {IERC721Enumerable-totalSupply}.
      */
-    function totalSupply() public view virtual override returns (uint256) {
+    function totalSupply() public view virtual override(ERC721r, IERC721Enumerable) returns (uint256) {
         return _allTokens.length;
     }
 
@@ -569,7 +600,7 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
      * @dev See {IERC721Enumerable-tokenByIndex}.
      */
     function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
-        require(index < ERC721Enumerable.totalSupply(), "ERC721Enumerable: global index out of bounds");
+        require(index < totalSupply(), "ERC721Enumerable: global index out of bounds");
         return _allTokens[index];
     }
 
@@ -613,7 +644,7 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
      * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
      */
     function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
-        uint256 length = ERC721.balanceOf(to);
+        uint256 length = ERC721r.balanceOf(to);
         _ownedTokens[to][length] = tokenId;
         _ownedTokensIndex[tokenId] = length;
     }
@@ -639,7 +670,7 @@ contract BionAvatar is ERC721r, IERC721Enumerable, Ownable {
         // To prevent a gap in from's tokens array, we store the last token in the index of the token to delete, and
         // then delete the last slot (swap and pop).
 
-        uint256 lastTokenIndex = ERC721.balanceOf(from) - 1;
+        uint256 lastTokenIndex = ERC721r.balanceOf(from) - 1;
         uint256 tokenIndex = _ownedTokensIndex[tokenId];
 
         // When the token to delete is the last token, the swap operation is unnecessary
